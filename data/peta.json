@@ -1,0 +1,20 @@
+{
+ "Eksternal": [
+  {
+   "id": "demo-map-external",
+   "nama": "demo-map-external.svg",
+   "mime": "image/svg+xml",
+   "ukuran": 0,
+   "diubah": 1790816400000
+  }
+ ],
+ "Internal": [
+  {
+   "id": "demo-map-internal",
+   "nama": "demo-map-internal.svg",
+   "mime": "image/svg+xml",
+   "ukuran": 0,
+   "diubah": 1790816400000
+  }
+ ]
+}
