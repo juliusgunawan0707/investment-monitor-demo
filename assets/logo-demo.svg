@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Integrated Area Management Agency (fictional demo logo)">
+  <title>Integrated Area Management Agency — fictional demo logo</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#6366f1"/>
+    </linearGradient>
+    <linearGradient id="blk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e0e7ff"/>
+    </linearGradient>
+  </defs>
+  <!-- hexagon badge -->
+  <path d="M64 6 114 35v58L64 122 14 93V35Z" fill="url(#bg)"/>
+  <path d="M64 14 107 39v50L64 114 21 89V39Z" fill="none" stroke="#ffffff" stroke-opacity=".35" stroke-width="2"/>
+  <!-- three ascending blocks = Zone A / B / C -->
+  <rect x="33" y="70" width="16" height="22" rx="3" fill="url(#blk)" fill-opacity=".85"/>
+  <rect x="56" y="56" width="16" height="36" rx="3" fill="url(#blk)" fill-opacity=".92"/>
+  <rect x="79" y="40" width="16" height="52" rx="3" fill="url(#blk)"/>
+  <!-- ground line -->
+  <rect x="29" y="95" width="70" height="4" rx="2" fill="#ffffff" fill-opacity=".9"/>
+  <!-- growth arc -->
+  <path d="M34 60 C 50 44, 66 36, 92 30" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="92" cy="30" r="4.5" fill="#ffffff"/>
+</svg>

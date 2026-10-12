@@ -25,6 +25,20 @@
     if (global.I18N) global.I18N.addDict(a[4]);
   }).catch(function (e) {
     if (global.console) console.error('[demo] ' + e.message + '. Serve this folder over http (python -m http.server); file:// blocks fetch().');
+    // pesan yang TERLIHAT: membuka index.html dengan klik dua kali (file://) memblokir fetch()
+    var tampil = function () {
+      var b = document.createElement('div');
+      b.setAttribute('role', 'alert');
+      b.style.cssText = 'position:fixed;left:16px;right:16px;bottom:16px;z-index:99999;padding:14px 18px;border-radius:12px;' +
+        'background:#7f1d1d;color:#fff;font:14px/1.5 system-ui,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.4)';
+      b.innerHTML = '<b>Demo data could not load.</b> ' + (location.protocol === 'file:'
+        ? 'This page was opened as a local file. Open it from a web server instead, e.g. run <code>python -m http.server 8140</code> in this folder and visit <code>http://localhost:8140/</code>.'
+        : 'Please reload the page.') +
+        '<br><span style="opacity:.85">Data demo gagal dimuat. ' + (location.protocol === 'file:'
+        ? 'Halaman dibuka sebagai file lokal; buka lewat server web (lihat perintah di atas).' : 'Muat ulang halaman.') + '</span>';
+      document.body.appendChild(b);
+    };
+    if (document.body) tampil(); else document.addEventListener('DOMContentLoaded', tampil);
     throw e;
   });
 
