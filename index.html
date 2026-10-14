@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,11 +7,12 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="assets/vendor/leaflet.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Versi dikunci agar update library tidak merusak dashboard -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://unpkg.com/lucide@0.294.0/dist/umd/lucide.min.js"></script>
-    <link rel="icon" type="image/svg+xml" href="assets/logo-demo.svg">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
 
     <style>
         :root {
@@ -187,6 +188,26 @@
         #map-viewer-wrapper:-webkit-full-screen #pdf-canvas-container {
             height: 100%;
         }
+
+        /* ====== Peta nyata (Leaflet) ====== */
+        .map-bar { display:flex; align-items:center; gap:12px; margin-bottom:10px; flex-wrap:wrap; }
+        .map-zones { display:flex; gap:6px; flex-wrap:wrap; flex:1 1 auto; }
+        .map-zones button { background:var(--bg-card); border:1px solid var(--border-color); color:var(--text-secondary); padding:6px 12px; border-radius:9999px; font:500 0.78rem var(--font-body); cursor:pointer; transition:var(--transition-smooth); }
+        .map-zones button:hover, .map-zones button.on { color:var(--text-primary); border-color:rgba(var(--accent-blue-rgb),0.5); background:var(--hover-bg); }
+        .map-legend { display:flex; gap:14px; flex-wrap:wrap; font-size:0.78rem; color:var(--text-secondary); }
+        .map-legend span.item { display:inline-flex; align-items:center; gap:6px; }
+        .map-legend i.dot { width:10px; height:10px; border-radius:50%; display:inline-block; border:1px solid rgba(255,255,255,0.6); }
+        .map-legend b { color:var(--text-primary); font-variant-numeric:tabular-nums; }
+        .dark-theme #leaflet-map .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.88) contrast(0.92) saturate(0.55); }
+        #leaflet-map { background:#0f172a; font-family:var(--font-body); }
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip { background:var(--bg-card-hover, #1e293b); color:var(--text-primary); }
+        .leaflet-popup-content { margin:12px 14px; font-size:0.8rem; line-height:1.55; }
+        .leaflet-popup-content .pp-title { font-family:var(--font-heading); font-weight:600; font-size:0.9rem; margin-bottom:4px; }
+        .leaflet-popup-content .pp-badge { display:inline-block; padding:1px 8px; border-radius:9999px; font-size:0.7rem; font-weight:600; color:#0b1220; margin-bottom:6px; }
+        .leaflet-container a.leaflet-popup-close-button { color:var(--text-secondary); }
+        .zone-label { background:rgba(15,23,42,0.78); border:1px solid rgba(255,255,255,0.18); color:#e2e8f0; font:600 11px var(--font-body); padding:2px 8px; border-radius:6px; box-shadow:none; }
+        .zone-label::before { display:none; }
+        #map-viewer-wrapper:fullscreen #leaflet-map, #map-viewer-wrapper:-webkit-full-screen #leaflet-map { height:100%; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
@@ -285,7 +306,7 @@
                 linear-gradient(rgba(15, 23, 42, 0.05) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
         }
-        .hero-content { position: relative; z-index: 3; padding: 24px; max-width: 920px; will-change: transform, opacity; }
+        .hero-content { position: relative; z-index: 3; padding: 24px; max-width: 1160px; will-change: transform, opacity; }
         .hero-logo { width: 84px; height: 84px; margin: 0 auto 22px; display: block; object-fit: contain; filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.4)); }
         .hero-title {
             font-family: var(--font-heading); font-weight: 800;
@@ -297,11 +318,11 @@
         .hero-stats { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin-top: 32px; }
         .hero-stat {
             background: rgba(var(--accent-blue-rgb), 0.05); border: 1px solid var(--border-color);
-            border-radius: 14px; padding: 14px 22px; min-width: 132px; backdrop-filter: blur(6px);
+            border-radius: 14px; padding: 14px 22px; min-width: 150px; backdrop-filter: blur(6px);
             transition: var(--transition-smooth);
         }
         .hero-stat:hover { transform: translateY(-3px); border-color: rgba(var(--accent-blue-rgb), 0.35); }
-        .hero-stat .num { font-family: var(--font-heading); font-size: 1.65rem; font-weight: 700; color: var(--text-primary); }
+        .hero-stat .num { font-family: var(--font-heading); font-size: 1.65rem; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; white-space: nowrap; min-height: 1.3em; }
         .hero-stat .lbl { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); margin-top: 4px; }
         .hero-cue {
             margin-top: 38px; display: inline-flex; align-items: center; gap: 8px;
@@ -343,7 +364,12 @@
         }
         @media (max-width: 640px) {
             .app-container { border-radius: 20px 20px 0 0; }
-            .hero-stat { min-width: 108px; padding: 10px 14px; }
+            .hero-content { padding: 20px 16px; }
+            .hero-title { font-size: 1.75rem; }
+            .hero-stats { gap: 10px; }
+            .hero-stat { flex: 1 1 calc(33.333% - 10px); min-width: 0; padding: 10px 8px; }
+            .hero-stat:nth-child(n+4) { flex-basis: 100%; }
+            .hero-stat .num { font-size: 1.3rem; }
             .hero-logo { width: 64px; height: 64px; }
         }
 
@@ -479,6 +505,21 @@
         .view-switch { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--text-secondary); }
         .view-mode-select, .map-toolbar select { background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px; padding: 7px 10px; font-family: var(--font-body); font-size: 0.8rem; cursor: pointer; max-width: 260px; }
         .hero-view { margin-top: 14px; display: flex; justify-content: center; }
+
+        /* Petunjuk "kartu ini bisa diklik": cincin berdenyut + label dengan ikon yang bergerak. Mati setelah klik pertama / reduced-motion */
+        .kpi-card.kpi-btn { position: relative; }
+        .kpi-card.kpi-btn::after { content: ''; position: absolute; inset: -1px; border-radius: 16px; border: 2px solid rgba(var(--accent-blue-rgb), 0.7); opacity: 0; pointer-events: none; }
+        .kpi-hint { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 0.72rem; font-weight: 500; color: var(--accent-blue); opacity: 0.85; transition: opacity 0.3s ease; }
+        .kpi-hint i, .kpi-hint svg { width: 14px; height: 14px; animation: hintTap 1.8s ease-in-out infinite; }
+        body:not(.kpi-diklik) .kpi-card.kpi-btn::after { animation: hintPulse 2.8s ease-out infinite; }
+        body:not(.kpi-diklik) .kpi-card.kpi-btn:nth-child(2)::after { animation-delay: 0.5s; }
+        body:not(.kpi-diklik) .kpi-card.kpi-btn:nth-child(3)::after { animation-delay: 1s; }
+        .kpi-card.kpi-btn:hover .kpi-hint { opacity: 1; }
+        .kpi-card.kpi-btn:hover::after { animation: none; }
+        body.kpi-diklik .kpi-hint { opacity: 0; height: 0; margin: 0; overflow: hidden; pointer-events: none; }
+        @keyframes hintPulse { 0% { opacity: 0.75; transform: scale(1); } 70%, 100% { opacity: 0; transform: scale(1.035); } }
+        @keyframes hintTap { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(3px, 3px) scale(0.92); } }
+        @media (prefers-reduced-motion: reduce) { .kpi-card.kpi-btn::after, .kpi-hint i, .kpi-hint svg { animation: none !important; } }
         .kpi-card.kpi-btn { cursor: pointer; user-select: none; }
         .kpi-card.kpi-btn:hover { transform: translateY(-2px); border-color: rgba(var(--accent-blue-rgb), 0.45); }
         .kpi-card.kpi-btn:focus-visible { outline: 2px solid var(--accent-blue); outline-offset: 2px; }
@@ -725,7 +766,7 @@
         <div class="hero-layer hero-bg" data-depth="0.15"></div>
         <div class="hero-layer hero-grid" data-depth="0.35"></div>
         <div class="hero-content" data-depth="0.55">
-            <img id="hero-logo" class="hero-logo" src="assets/logo-demo.svg" alt="Integrated Area Management Agency (fictional) logo">
+            <img id="hero-logo" class="hero-logo" src="assets/logo-demo.png" alt="Integrated Area Management Agency (fictional) logo">
             <h1 class="hero-title">Monitor Investasi</h1>
             <p class="hero-sub" id="hero-tagline">Transparansi progres pembangunan di Zona A / B / C</p>
             <div class="hero-stats">
@@ -753,10 +794,9 @@
 
         <header class="main-header">
             <div class="logo-area">
-                <div class="logo-icon brand-logo-box"><img class="brand-logo" src="assets/logo-demo.svg" alt="Integrated Area Management Agency (fictional) logo"></div>
+                <div class="logo-icon brand-logo-box"><img class="brand-logo" src="assets/logo-demo.png" alt="Integrated Area Management Agency (fictional) logo"></div>
                 <div>
                     <h1 class="brand-title" id="brand-title">Monitor Investasi</h1>
-                    <p class="subtitle" id="brand-subtitle">Badan Pengelola Kawasan Terpadu (fiktif) &mdash; Monitoring PKS &amp; Realisasi Investasi</p>
                 </div>
             </div>
 
@@ -812,6 +852,7 @@
                         </div>
                         <div class="kpi-value">-</div>
                         <div class="kpi-footer"><span class="kpi-sub" id="kpi-total-sub">-</span></div>
+                        <div class="kpi-hint"><i data-lucide="mouse-pointer-click"></i><span>Klik untuk memfilter</span></div>
                     </div>
                     <div class="kpi-card kpi-btn" id="kpi-pra-pks" data-kelompok="PRA" role="button" tabindex="0" title="Tampilkan hanya Pra PKS">
                         <div class="kpi-header">
@@ -820,6 +861,7 @@
                         </div>
                         <div class="kpi-value">-</div>
                         <div class="kpi-footer"><span class="kpi-sub" id="kpi-pra-sub">-</span></div>
+                        <div class="kpi-hint"><i data-lucide="mouse-pointer-click"></i><span>Klik untuk memfilter</span></div>
                     </div>
                     <div class="kpi-card kpi-btn" id="kpi-pasca-pks" data-kelompok="PASCA" role="button" tabindex="0" title="Tampilkan hanya Pasca PKS">
                         <div class="kpi-header">
@@ -828,6 +870,7 @@
                         </div>
                         <div class="kpi-value">-</div>
                         <div class="kpi-footer"><span class="kpi-sub" id="kpi-pasca-sub">-</span></div>
+                        <div class="kpi-hint"><i data-lucide="mouse-pointer-click"></i><span>Klik untuk memfilter</span></div>
                     </div>
                     <div class="kpi-card" id="kpi-komitmen">
                         <div class="kpi-header">
@@ -860,6 +903,11 @@
                         <h3>Pelaku Usaha per Sektor</h3>
                         <p class="chart-sub" id="sektor-sub"></p>
                         <div class="chart-container"><canvas id="sektorChart"></canvas><div class="wadah-empty" id="sektor-empty"></div></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Komitmen Investasi per Sektor</h3>
+                        <p class="chart-sub" id="komsek-sub"></p>
+                        <div class="chart-container"><canvas id="komSektorChart"></canvas><div class="wadah-empty" id="komsek-empty"></div></div>
                     </div>
                     <div class="chart-card span-2" id="card-perizinan">
                         <h3>Rekap Perizinan &amp; Fasilitas Insentif (persil Pasca PKS)</h3>
@@ -1166,29 +1214,13 @@
                 </div>
 
                 <div id="map-viewer-wrapper">
-                <!-- Zoom controls -->
-                <div id="map-zoom-bar" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;justify-content:flex-end;">
-                    <button id="map-zoom-out" class="btn-icon" title="Perkecil" style="width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;"><i data-lucide="zoom-out" style="width:16px;height:16px;"></i></button>
-                    <span id="map-zoom-label" style="min-width:44px;text-align:center;font-size:0.82rem;color:var(--text-secondary);font-variant-numeric:tabular-nums;">100%</span>
-                    <button id="map-zoom-in" class="btn-icon" title="Perbesar" style="width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;"><i data-lucide="zoom-in" style="width:16px;height:16px;"></i></button>
-                    <button id="map-zoom-reset" class="btn-icon" title="Reset zoom" style="width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;"><i data-lucide="rotate-ccw" style="width:16px;height:16px;"></i></button>
-                    <div style="width:1px;height:20px;background:var(--border-color);margin:0 2px;"></div>
+                <div id="map-zoom-bar" class="map-bar">
+                    <div id="map-zones" class="map-zones"></div>
+                    <div id="map-legend" class="map-legend"></div>
                     <button id="map-fullscreen-btn" class="btn-icon" title="Layar Penuh" style="width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;"><i data-lucide="maximize-2" style="width:16px;height:16px;"></i></button>
                 </div>
-
-                <div class="chart-card" style="padding: 0; overflow: hidden; height: 750px; border-radius: 16px; position: relative;">
-                    <div id="pdf-canvas-container" style="width:100%;height:100%;overflow-y:auto;overflow-x:auto;background:#525659;display:flex;flex-direction:column;align-items:center;padding:8px 0;box-sizing:border-box;"></div>
-                    <div id="map-iframe-fallback" style="display: none; padding: 40px; text-align: center; height: 100%; flex-direction: column; justify-content: center; align-items: center; gap: 16px;">
-                        <div class="logo-icon" style="width: 64px; height: 64px; margin: 0 auto; background: rgba(248, 113, 113, 0.1); color: var(--accent-red);">
-                            <i data-lucide="alert-circle" style="width: 32px; height: 32px;"></i>
-                        </div>
-                        <h3 style="font-family: var(--font-heading); font-size: 1.25rem;">Tidak Dapat Menampilkan PDF Secara Langsung</h3>
-                        <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto; font-size: 0.9rem;">Gunakan tombol di bawah untuk membuka peta di tab baru.</p>
-                        <p id="map-fallback-reason" style="color: var(--accent-red); max-width: 560px; margin: 0 auto; font-size: 0.8rem; font-family: monospace; word-break: break-word;"></p>
-                        <a id="map-fallback-link" href="assets/map-external.en.svg" target="_blank" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none; margin-top: 12px;">
-                            <i data-lucide="download"></i><span>Buka / Unduh Peta PDF</span>
-                        </a>
-                    </div>
+                <div class="chart-card" id="map-card" style="padding: 0; overflow: hidden; height: 680px; border-radius: 16px; position: relative;">
+                    <div id="leaflet-map" style="width:100%;height:100%;"></div>
                 </div>
                 </div><!-- /map-viewer-wrapper -->
             </section>
@@ -1511,8 +1543,9 @@
         <div class="toast-text" id="toast-text">Menyimpan...</div>
     </div>
 
-    <script src="i18n.js"></script>
-    <script src="shim.js"></script>
+    <script src="assets/vendor/leaflet.js"></script>
+    <script src="i18n.js?v=20261014"></script>
+    <script src="shim.js?v=20261014"></script>
     <script>
         // ============ STATE ============
         let appData = null;
@@ -1527,7 +1560,7 @@
         let currentPksFilter = 'ALL';
         let pendingDelete = null;
         let lastEditedRowIndex = null;
-        let hambatanPraChart = null, hambatanPascaChart = null, negaraChart = null, sektorChart = null, perizinanChart = null;
+        let komSektorChart = null, hambatanPraChart = null, hambatanPascaChart = null, negaraChart = null, sektorChart = null, perizinanChart = null;
         let aStatusChart = null, aPembChart = null, aPerizChart = null, aTimelineChart = null, aZoneChart = null, aGbChart = null;
         let kontribusiData = null;
         let kStatusChart = null, kHutangChart = null;
@@ -1928,6 +1961,7 @@
             renderCharts();
             renderPKSUpdates(currentPksFilter);
             tandaiKelompok();
+            if (petaInit) petaPlot();
         }
 
         // Nilai komitmen investasi untuk kelompok ALL / PRA / PASCA
@@ -1947,6 +1981,7 @@
             document.getElementById('kpi-komitmen-sub').textContent = km.sub;
         }
 
+        let heroFirstRun = true;
         function updateKPIs() {
             const s = computeSummary();
             const nTotal = s.total.size, nPra = s.pra.size, nPasca = s.pasca.size, nNon = s.nonaktif.size;
@@ -1971,12 +2006,16 @@
             const kmAll = hitungKomitmen('ALL');
             renderKomitmenKpi();
 
-            // Kartu angka di hero
-            setHeroStat('hero-stat-pelaku', nTotal);
-            setHeroStat('hero-stat-pra', nPra);
-            setHeroStat('hero-stat-pasca', nPasca);
-            animateRupiah(document.getElementById('hero-stat-komitmen'), kmAll.nilai);
-            setHeroStat('hero-stat-lahan', Math.round(s.luasTerdistribusi), ' m²');
+            // Kartu angka di hero (hitung-mundur dimulai setelah layar loading selesai memudar, 0,5 dtk)
+            const heroDelay = heroFirstRun ? 550 : 0;
+            heroFirstRun = false;
+            setTimeout(() => {
+                setHeroStat('hero-stat-pelaku', nTotal);
+                setHeroStat('hero-stat-pra', nPra);
+                setHeroStat('hero-stat-pasca', nPasca);
+                animateRupiah(document.getElementById('hero-stat-komitmen'), kmAll.nilai);
+                setHeroStat('hero-stat-lahan', Math.round(s.luasTerdistribusi), ' m²');
+            }, heroDelay);
             document.getElementById('hero-sub-pelaku').textContent = `${s.aktifPersil} persil`;
             document.getElementById('hero-sub-pra').textContent = `${s.praPersil} persil`;
             document.getElementById('hero-sub-pasca').textContent = `${s.pascaPersil} PKS`;
@@ -2973,6 +3012,7 @@
             renderHambatanCharts();
             renderWadahChart('negara', 'negaraChart', 'negara-empty', 'negara-sub', c => negaraChart = c, () => negaraChart);
             renderWadahChart('sektor', 'sektorChart', 'sektor-empty', 'sektor-sub', c => sektorChart = c, () => sektorChart);
+            renderKomitmenSektorChart();
             renderPerizinanChart();
             renderCekData();
         }
@@ -3125,6 +3165,41 @@
                     : { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
                         scales: { x: { beginAtZero: true, ticks: { color: c.text, precision: 0 }, grid: { color: c.grid } }, y: { ticks: { color: c.text }, grid: { display: false } } } }
             }));
+        }
+
+        // Komitmen investasi per sektor: nilai uang per sektor (melengkapi grafik jumlah perusahaan di sebelahnya)
+        function renderKomitmenSektorChart() {
+            if (komSektorChart) { komSektorChart.destroy(); komSektorChart = null; }
+            const empty = document.getElementById('komsek-empty'), sub = document.getElementById('komsek-sub');
+            if (!empty || !sub) return;
+            const sKey = wadahKey('sektor'), kKey = wadahKey('komitmen');
+            const sum = {}; let total = 0;
+            if (sKey && kKey) getMaster().forEach(r => {
+                if (!dalamKelompok(r)) return;
+                const v = parseNum(r[kKey]), lab = r[sKey] ? String(r[sKey]).trim() : '';
+                if (!(v > 0) || !lab) return;
+                sum[lab] = (sum[lab] || 0) + v; total += v;
+            });
+            const pairs = Object.entries(sum).sort((a, b) => b[1] - a[1]);
+            if (!pairs.length) {
+                empty.innerHTML = `<i data-lucide="inbox"></i><div>Data komitmen per sektor belum tersedia.</div>`;
+                empty.classList.add('show'); sub.textContent = ''; lucide.createIcons();
+                return;
+            }
+            empty.classList.remove('show');
+            const top = pairs.slice(0, 9);
+            const rest = pairs.slice(9).reduce((s, p) => s + p[1], 0);
+            if (rest) top.push(['Lainnya', rest]);
+            sub.textContent = `${I18N.tr('Total komitmen')}: ${formatRupiah(total)}`;
+            const c = chartColors(), en = I18N.getLang() === 'en';
+            const singkat = v => v === 0 ? '0' : v >= 1e12 ? I18N.dec(+(v / 1e12).toFixed(2)) + ' T' : I18N.dec(+(v / 1e9).toFixed(0)) + (en ? ' B' : ' M');
+            komSektorChart = new Chart(document.getElementById('komSektorChart').getContext('2d'), {
+                type: 'bar',
+                data: { labels: top.map(p => p[0]), datasets: [{ data: top.map(p => p[1]), backgroundColor: '#DBAF6C', borderColor: 'transparent', borderRadius: 4 }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => formatRupiah(ctx.parsed.x) + ' · ' + Math.round(ctx.parsed.x / total * 100) + '%' } } },
+                    scales: { x: { beginAtZero: true, ticks: { color: c.text, callback: singkat }, grid: { color: c.grid } }, y: { ticks: { color: c.text }, grid: { display: false } } } }
+            });
         }
 
         // Rekap perizinan & insentif: berapa persil Pasca PKS yang sudah terbit / sudah memperoleh fasilitas
@@ -3572,37 +3647,154 @@
             document.getElementById('map-zoom-label').textContent = Math.round(_imgScale * 100) + '%';
         }
 
+        // ============ PETA NYATA (Leaflet + peta jalan Singapura; zona & persil adalah FIKTIF) ============
+        const PETA_ZONA = {
+            A: { nama: 'Zona A', warna: '#4C8FC9', poly: [[1.2745, 103.8405], [1.2745, 103.8490], [1.2790, 103.8525], [1.2870, 103.8525], [1.2885, 103.8470], [1.2840, 103.8405]] },
+            B: { nama: 'Zona B', warna: '#5FAE5A', poly: [[1.2980, 103.8540], [1.2980, 103.8625], [1.3040, 103.8650], [1.3090, 103.8625], [1.3090, 103.8540]] },
+            C: { nama: 'Zona C', warna: '#A87FD1', poly: [[1.3010, 103.8290], [1.3010, 103.8395], [1.3070, 103.8425], [1.3115, 103.8385], [1.3100, 103.8290]] },
+            D: { nama: 'Area Pendukung', warna: '#D98F5C', poly: [[1.2840, 103.8280], [1.2840, 103.8340], [1.2890, 103.8340], [1.2890, 103.8280]] }
+        };
+        const PETA_STATUS = {
+            Internal:  { sold: ['Sudah PKS', '#5FAE5A'], booked: ['Proses Pra PKS', '#DBAF6C'], out: ['Tidak layak / mundur', '#94a3b8'] },
+            Eksternal: { sold: ['Sold', '#5FAE5A'], booked: ['Booked', '#DBAF6C'], out: ['Available', '#4C8FC9'] }
+        };
+        let petaMap = null, petaTiles = null, petaLayer = null, petaZoneLayer = null, petaDots = [];
+
+        function petaZonaKey(lokasi) {
+            const s = String(lokasi || '').toLowerCase();
+            if (/zona a/.test(s)) return 'A';
+            if (/zona b/.test(s)) return 'B';
+            if (/zona c/.test(s)) return 'C';
+            if (/pendukung/.test(s)) return 'D';
+            return null;
+        }
+        function petaRng(seed) {
+            let a = seed >>> 0;
+            return function () { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+        }
+        function petaDalam(pt, poly) {
+            let in_ = false;
+            for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+                const a = poly[i], b = poly[j];
+                if ((a[0] > pt[0]) !== (b[0] > pt[0]) && pt[1] < (b[1] - a[1]) * (pt[0] - a[0]) / (b[0] - a[0]) + a[1]) in_ = !in_;
+            }
+            return in_;
+        }
+        // Posisi tiap persil: acak-tetap (seed = urutan baris), disebar merata di dalam poligon zonanya
+        function petaHitungPosisi() {
+            const out = [], dipakai = {};
+            const lokKey = getMaster().length ? getExactKey(getMaster()[0], ['Lokasi Persil', 'Persil']) : null;
+            getMaster().forEach((r, idx) => {
+                const z = petaZonaKey(lokKey ? r[lokKey] : null);
+                if (!z) return;
+                const poly = PETA_ZONA[z].poly, lats = poly.map(p => p[0]), lngs = poly.map(p => p[1]);
+                const lo = [Math.min(...lats), Math.min(...lngs)], hi = [Math.max(...lats), Math.max(...lngs)];
+                const rng = petaRng(idx * 2654435761 + 17), sudah = dipakai[z] || (dipakai[z] = []);
+                let best = null, bd = -1;
+                for (let t = 0; t < 40; t++) {
+                    const cand = [lo[0] + rng() * (hi[0] - lo[0]), lo[1] + rng() * (hi[1] - lo[1])];
+                    if (!petaDalam(cand, poly)) continue;
+                    let md = Infinity;
+                    sudah.forEach(q => { const d = (q[0] - cand[0]) ** 2 + (q[1] - cand[1]) ** 2; if (d < md) md = d; });
+                    if (md > bd) { bd = md; best = cand; }
+                }
+                if (!best) best = [(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2];
+                sudah.push(best);
+                out.push({ r, z, ll: best });
+            });
+            return out;
+        }
+
+        function petaRadii() {
+            if (!petaMap) return;
+            const k = Math.min(2.2, Math.max(0.5, (petaMap.getZoom() - 10) / 5));
+            petaDots.forEach(m => m.setRadius(Math.max(3, (3.5 + 6 * m._skala) * k)));
+        }
+
+        // Tile OpenStreetMap; tema gelap dibuat lewat filter CSS (lihat .leaflet-tile-pane) — tanpa API key
+        function petaTema() {
+            if (!petaMap || petaTiles) return;
+            petaTiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(petaMap);
+        }
+
+        function petaPlot() {
+            if (!petaMap || !appData) return;
+            const internal = petaJenis === 'Internal', ST = PETA_STATUS[petaJenis];
+            petaLayer.clearLayers(); petaZoneLayer.clearLayers(); petaDots = [];
+            Object.values(PETA_ZONA).forEach(z => {
+                L.polygon(z.poly, { color: z.warna, weight: 2, dashArray: '6 5', fillColor: z.warna, fillOpacity: 0.12, interactive: false }).addTo(petaZoneLayer)
+                    .bindTooltip(I18N.tr(z.nama), { permanent: true, direction: 'center', className: 'zone-label', interactive: false });
+            });
+            const m0 = getMaster()[0] || {};
+            const areaKey = getExactKey(m0, ['Luas Lahan (m2)', 'Luas Lahan']);
+            const namaKey = getExactKey(m0, ['Nama Pelaku Usaha']);
+            const lokKey = getExactKey(m0, ['Lokasi Persil', 'Persil']);
+            const sKey = wadahKey('sektor'), kKey = wadahKey('komitmen');
+            const pos = petaHitungPosisi();
+            const maxA = Math.max(1, ...pos.map(p => parseNum(areaKey ? p.r[areaKey] : 0)));
+            const cnt = { sold: 0, booked: 0, out: 0 };
+            pos.forEach(p => {
+                const r = p.r, info = persilInfo(r);
+                const st = !info.aktif ? 'out' : (info.pasca ? 'sold' : 'booked');
+                cnt[st]++;
+                const area = parseNum(areaKey ? r[areaKey] : 0), col = ST[st][1];
+                const m = L.circleMarker(p.ll, { radius: 5, color: '#ffffff', weight: 1.2, fillColor: col, fillOpacity: 0.92 });
+                m._skala = Math.sqrt(area / maxA);
+                const judul = internal ? (r[namaKey] || '-') : (r[lokKey] || '-');
+                let html = `<span class="pp-badge" style="background:${col}">${escapeHtml(ST[st][0])}</span><div class="pp-title">${escapeHtml(judul)}</div>`;
+                if (internal) html += `<div><strong>Lokasi Persil:</strong> ${escapeHtml(r[lokKey] || '-')}</div>`;
+                html += `<div><strong>Luas Lahan:</strong> ${formatArea(area)} m²</div>`;
+                if (sKey && r[sKey]) html += `<div><strong>Sektor:</strong> ${escapeHtml(r[sKey])}</div>`;
+                if (internal && kKey && parseNum(r[kKey]) > 0) html += `<div><strong>Komitmen Investasi:</strong> ${formatRupiah(parseNum(r[kKey]))}</div>`;
+                m.bindPopup(html, { maxWidth: 260 });
+                m.on('mouseover', () => m.setStyle({ weight: 2.5 })).on('mouseout', () => m.setStyle({ weight: 1.2 }));
+                m.addTo(petaLayer); petaDots.push(m);
+            });
+            petaRadii();
+            document.getElementById('map-legend').innerHTML = ['sold', 'booked', 'out'].map(k =>
+                `<span class="item"><i class="dot" style="background:${ST[k][1]}"></i><span>${escapeHtml(ST[k][0])}</span><b>${cnt[k]}</b></span>`).join('');
+            petaStatus(`<i data-lucide="map-pin"></i><span>Singapore · ${pos.length} persil · zona dan persil fiktif</span>`);
+        }
+
+        function petaFitSemua() {
+            const all = [].concat(...Object.values(PETA_ZONA).map(z => z.poly));
+            petaMap.flyToBounds(L.latLngBounds(all), { padding: [40, 40], duration: 0.8 });
+        }
+
         function petaInitListeners() {
-            document.getElementById('map-zoom-in').onclick = function () {
-                if (_mapKind === 'img') { _imgScale = Math.min(4, Math.round((_imgScale + 0.25) * 100) / 100); _mapTerapkanGambar(); }
-                else if (_mapScale < _MAP_SCALE_MAX) { _mapScale = Math.round((_mapScale + _MAP_SCALE_STEP) * 10) / 10; _mapRenderAll(); }
-            };
-            document.getElementById('map-zoom-out').onclick = function () {
-                if (_mapKind === 'img') { _imgScale = Math.max(0.5, Math.round((_imgScale - 0.25) * 100) / 100); _mapTerapkanGambar(); }
-                else if (_mapScale > _MAP_SCALE_MIN) { _mapScale = Math.round((_mapScale - _MAP_SCALE_STEP) * 10) / 10; _mapRenderAll(); }
-            };
-            document.getElementById('map-zoom-reset').onclick = function () {
-                if (_mapKind === 'img') { _imgScale = 1; _mapTerapkanGambar(); }
-                else { _mapScale = _MAP_SCALE_DEFAULT; _mapRenderAll(true); }
-            };
             const fsBtn = document.getElementById('map-fullscreen-btn'), fsIcon = fsBtn ? fsBtn.querySelector('i') : null;
             if (fsBtn) fsBtn.onclick = function () {
                 const el = document.getElementById('map-viewer-wrapper');
                 if (!document.fullscreenElement) el.requestFullscreen().catch(function () {}); else document.exitFullscreen();
             };
             document.addEventListener('fullscreenchange', function () {
-                if (!fsIcon) return;
-                fsIcon.setAttribute('data-lucide', document.fullscreenElement ? 'minimize-2' : 'maximize-2');
-                lucide.createIcons();
+                if (fsIcon) { fsIcon.setAttribute('data-lucide', document.fullscreenElement ? 'minimize-2' : 'maximize-2'); lucide.createIcons(); }
+                setTimeout(() => petaMap && petaMap.invalidateSize(), 150);
             });
             document.getElementById('peta-jenis').addEventListener('change', e => petaSetJenis(e.target.value));
-            document.getElementById('peta-versi').addEventListener('change', e => petaTampil(parseInt(e.target.value, 10)));
+            const zb = document.getElementById('map-zones');
+            zb.innerHTML = `<button type="button" data-z="*">Semua zona</button>` + Object.keys(PETA_ZONA).map(k => `<button type="button" data-z="${k}">${escapeHtml(PETA_ZONA[k].nama)}</button>`).join('');
+            zb.addEventListener('click', e => {
+                const b = e.target.closest('button'); if (!b) return;
+                zb.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+                if (b.dataset.z === '*') petaFitSemua();
+                else petaMap.flyToBounds(L.latLngBounds(PETA_ZONA[b.dataset.z].poly), { padding: [60, 60], duration: 0.8, maxZoom: 16 });
+            });
         }
 
         function loadPeta() {
-            if (petaInit) return;
+            if (petaInit) { setTimeout(() => petaMap && petaMap.invalidateSize(), 60); return; }
             petaInit = true;
             petaInitListeners();
+            petaMap = L.map('leaflet-map', { preferCanvas: true, worldCopyJump: false }).setView([1.292, 103.846], 14);
+            petaLayer = L.layerGroup().addTo(petaMap);
+            petaZoneLayer = L.layerGroup().addTo(petaMap);
+            petaMap.on('zoomend', petaRadii);
+            petaTema();
+            petaMap.fitBounds(L.latLngBounds([].concat(...Object.values(PETA_ZONA).map(z => z.poly))), { padding: [40, 40] });
             petaSetJenis('Eksternal');
         }
 
@@ -3613,69 +3805,7 @@
             document.getElementById('peta-deskripsi').textContent = jenis === 'Internal'
                 ? 'Peta internal (dengan nama pelaku usaha) — hanya untuk tampilan internal.'
                 : 'Peta eksternal tanpa nama pelaku usaha — hanya menampilkan status Available, Booked, dan Sold.';
-            petaMuatDaftar();
-        }
-
-        function petaMuatDaftar() {
-            petaStatus(PETA_LOADER + '<span>Memuat daftar peta...</span>');
-            const sukses = function (res) {
-                if (!res || !res.ok) { petaGagal(res && res.message); return; }
-                petaFiles = res.files || [];
-                const sel = document.getElementById('peta-versi');
-                sel.innerHTML = petaFiles.map((f, i) => `<option value="${i}">${i === 0 ? 'Terbaru — ' : ''}${escapeHtml(f.nama)} (${escapeHtml(formatDate(new Date(f.diubah).toISOString()))})</option>`).join('');
-                sel.style.display = petaFiles.length > 1 ? '' : 'none';
-                petaTampil(0);
-            };
-            if (isGAS()) {
-                google.script.run.withSuccessHandler(sukses).withFailureHandler(err => petaGagal(String((err && err.message) || err))).daftarPeta(petaJenis);
-            } else {   // mode lokal (uji): peta-lokal.json
-                fetch('peta-lokal.json').then(r => r.json())
-                    .then(j => sukses({ ok: true, files: j[petaJenis] || [], bisaUnggah: !!j.bisaUnggah }))
-                    .catch(() => sukses({ ok: true, files: [], bisaUnggah: false }));
-            }
-        }
-
-        function petaTampil(i) {
-            const f = petaFiles[i];
-            if (!f) {
-                petaStatus(`<i data-lucide="cloud-off"></i><span>Belum ada file</span>`);
-                petaPesan(`Belum ada file peta ${escapeHtml(petaJenis.toLowerCase())}.<br><span style="font-size:0.8rem;opacity:.8;">Peta akan tampil di sini setelah tersedia.</span>`);
-                return;
-            }
-            petaStatus(PETA_LOADER + `<span>Memuat ${escapeHtml(f.nama)}...</span>`);
-            const proses = (b64OrBuf, mime, nama, viewUrl) => {
-                                let bytes = b64OrBuf;
-                if (typeof b64OrBuf === 'string') { const bin = atob(b64OrBuf); bytes = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) bytes[k] = bin.charCodeAt(k); }
-                document.getElementById('map-iframe-fallback').style.display = 'none';
-                const cont = document.getElementById('pdf-canvas-container'); cont.style.display = 'flex';
-                if (/pdf/i.test(mime || '') || /\.pdf$/i.test(nama)) {
-                    _mapKind = 'pdf';
-                    pdfjsLib.getDocument({ data: bytes }).promise.then(pdf => {
-                        _mapPdfDoc = pdf; _mapScale = _MAP_SCALE_DEFAULT;
-                        petaStatus(`<i data-lucide="cloud"></i><span>${escapeHtml(nama)} (${pdf.numPages} hal.)</span>`);
-                        _mapRenderAll(true);
-                    }).catch(e => petaGagal('PDF.js: ' + (e && e.message || e), viewUrl));
-                } else {
-                    _mapKind = 'img'; _mapPdfDoc = null; _imgScale = 1;
-                    if (_petaUrl) URL.revokeObjectURL(_petaUrl);
-                    _petaUrl = URL.createObjectURL(new Blob([bytes], { type: mime || 'image/png' }));
-                    cont.innerHTML = `<img id="peta-img" alt="Peta" src="${_petaUrl}" style="display:block;margin:6px auto;max-width:none;box-shadow:0 2px 10px rgba(0,0,0,0.5);">`;
-                    const img = document.getElementById('peta-img');
-                    img.onload = _mapTerapkanGambar;
-                    petaStatus(`<i data-lucide="cloud"></i><span>${escapeHtml(nama)}</span>`);
-                }
-            };
-            if (isGAS()) {
-                google.script.run
-                    .withSuccessHandler(res => {
-                        if (!res || !res.success) { petaGagal(res && res.message); return; }
-                        proses(res.base64, res.mimeType, res.name, null);
-                    })
-                    .withFailureHandler(err => petaGagal(String((err && err.message) || err)))
-                    .ambilPeta(f.id);
-            } else {
-                fetch(f.url).then(r => r.arrayBuffer()).then(buf => proses(new Uint8Array(buf), f.mime, f.nama, null)).catch(e => petaGagal(String(e)));
-            }
+            petaPlot();
         }
 
 
@@ -3686,6 +3816,7 @@
                 document.body.classList.toggle('light-theme');
                 document.body.classList.toggle('dark-theme');
                 if (appData) renderCharts();
+                if (petaInit) petaTema();
                 renderAnalyticsChartsThemeRefresh();
             });
 
@@ -3724,7 +3855,7 @@
             document.getElementById('search-input').addEventListener('input', runFilters);
             document.getElementById('filter-status').addEventListener('change', onStatusFilterChange);
             document.querySelectorAll('.kpi-btn').forEach(el => {
-                const klik = () => { const g = el.dataset.kelompok; setKelompok(kelompokAktif() === g && g !== 'ALL' ? 'ALL' : g); };
+                const klik = () => { document.body.classList.add('kpi-diklik'); const g = el.dataset.kelompok; setKelompok(kelompokAktif() === g && g !== 'ALL' ? 'ALL' : g); };
                 el.addEventListener('click', klik);
                 el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); klik(); } });
             });
@@ -3971,7 +4102,7 @@
                 updateKPIs(); renderCharts(); renderTable(); renderPKSUpdates(currentPksFilter);
                 if (analyticsData && analyticsData.ok) renderAnalytics(analyticsData);
                 if (kontribusiData && kontribusiData.ok) renderKontribusi(kontribusiData);
-                if (petaInit) petaMuatDaftar();
+                if (petaInit) { petaPlot(); renderKomitmenSektorChart(); }
             });
             bindStaticListeners();
             initViewMode();
